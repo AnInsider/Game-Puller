@@ -12,7 +12,7 @@ using System.Drawing;
 public class UrlEntry
 {
     public string Name { get; set; }
-    public string Url { get; set; } // Only used if no sub-buttons
+    public string Url { get; set; } 
     public string Subtitle { get; set; }
     public List<SubButtonEntry> SubButtons { get; set; }
 }
@@ -28,7 +28,7 @@ class Program : Form
 {
     private readonly Dictionary<string, string> tabFiles = new Dictionary<string, string>
     {
-        { "Games", "https://pastebin.com/raw/82qG4QKW" }, // Replace with actual raw Pastebin link
+        { "Games", "https://pastebin.com/raw/82qG4QKW" }, 
         { "Tools", "https://pastebin.com/raw/z6DDsVJa" }
     };
 
@@ -112,24 +112,21 @@ private async Task UpdateTab(string tabName, string url)
                     CreateMainButton(panel, entry, ref top);
                 }
 
-                // Force all sub-panels to auto-size
                 foreach (Control ctrl in panel.Controls)
                 {
                     if (ctrl is Panel subPanel)
                     {
-                        subPanel.Visible = true; // optional: expand at start
+                        subPanel.Visible = true; 
                         subPanel.PerformLayout();
                     }
                 }
 
-                // Recalculate all button positions based on real sizes
                 AdjustAllButtonPositions(panel);
             }));
         }
     }
     catch
     {
-        // Silently fail
     }
 }
 private void CreateMainButton(Panel panel, UrlEntry entry, ref int top)

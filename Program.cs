@@ -12,7 +12,7 @@ using System.Drawing;
 public class UrlEntry
 {
     public string Name { get; set; }
-    public string Url { get; set; } 
+    public string Url { get; set; } // Only used if no sub-buttons
     public string Subtitle { get; set; }
     public List<SubButtonEntry> SubButtons { get; set; }
 }
@@ -27,15 +27,22 @@ public class SubButtonEntry
 class Program : Form
 {
     private readonly Dictionary<string, string> tabFiles = new Dictionary<string, string>
-    {
-        { "Games", "https://pastebin.com/raw/82qG4QKW" }, 
-        { "Tools", "https://pastebin.com/raw/z6DDsVJa" }
-    };
+{
+    { "Games", "https://pastebin.com/raw/82qG4QKW" },
+    { "Online Games", "https://pastebin.com/raw/E9USbbDM" },
+    { "Other", "https://pastebin.com/raw/z6DDsVJa" },
+    { "Cracking Tools", "https://pastebin.com/raw/1VAugM38" }
+};
+
 
     private TabControl tabControl;
     private Dictionary<string, Panel> tabPanels = new Dictionary<string, Panel>();
     private Dictionary<string, string> lastContents = new Dictionary<string, string>();
     private System.Timers.Timer updateTimer;
+    private const string CurrentVersion = "1.1.0"; // your app's version
+    private const string LatestVersionUrl = "https://raw.githubusercontent.com/AnInsider/Game-Puller/main/version.txt";
+    private const string GitHubReleasesUrl = "https://github.com/AnInsider/Game-Puller/releases/tag/Release";
+
 
     [STAThread]
     static void Main(string[] args)
@@ -50,7 +57,10 @@ class Program : Form
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Program());
+            var app = new Program();
+            bool upToDate = Task.Run(() => app.CheckForUpdates()).Result;
+            if (!upToDate) return;
+            Application.Run(app);
         }
     }
 
@@ -112,21 +122,24 @@ private async Task UpdateTab(string tabName, string url)
                     CreateMainButton(panel, entry, ref top);
                 }
 
+                // Force all sub-panels to auto-size
                 foreach (Control ctrl in panel.Controls)
                 {
                     if (ctrl is Panel subPanel)
                     {
-                        subPanel.Visible = true; 
+                        subPanel.Visible = true; // optional: expand at start
                         subPanel.PerformLayout();
                     }
                 }
 
+                // Recalculate all button positions based on real sizes
                 AdjustAllButtonPositions(panel);
             }));
         }
     }
     catch
     {
+        // Silently fail
     }
 }
 private void CreateMainButton(Panel panel, UrlEntry entry, ref int top)
@@ -289,6 +302,40 @@ private void AdjustPositionsFrom(Panel panel, Control startControl)
             MessageBox.Show("Unable to open URL: " + url);
         }
     }
+    private async Task<bool> CheckForUpdates()
+{
+    try
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            string latestVersion = (await client.GetStringAsync(LatestVersionUrl)).Trim();
+            if (latestVersion != CurrentVersion)
+            {
+                var result = MessageBox.Show(
+                    $"A newer version ({latestVersion}) is available.\n" +
+                    $"You are using {CurrentVersion}.\n\n" +
+                    "Do you want to download the latest version?",
+                    "Update Available",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Information
+                );
+
+                if (result == DialogResult.Yes)
+                {
+                    Process.Start(new ProcessStartInfo(GitHubReleasesUrl) { UseShellExecute = true });
+                }
+
+                return false; // not up to date → close
+            }
+        }
+    }
+    catch
+    {
+        
+    }
+
+    return true; // up to date → continue running
+}
 }
 /// <summary>
 /// Developer JSON maker GUI
